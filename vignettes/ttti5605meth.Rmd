@@ -251,13 +251,138 @@ ggplot(Control_GpC,aes(x=log_lik_ratio))+
 ## Creating a methylation matrix based on genomic ranges
 
 Since the ttTi5605 PCR fragment is only 2.3 kb long we will create a matrix over the whole region.
+The function tsv2methMat, takes a data table from the methylation called tsv that has been split into individual motifs, a genomic range, and the motif called in that tsv ("CG" or "GC"). It returns a matrix with reads in individual rows, and absolute positions of the motif in the genomic range as columns. Methylated positions have the value 1, non-methylated positions have the value 0 and inconclusive calls have the value NA.
 
 
-```{r}
-#freq<-MSssI_CpG %>%
-#  dplyr::group_by(read_name) %>%
-#  dplyr::summarise(freqMeth=mean(methylated,na.rm=T),count=n())
+```{r smFig, fig.width = 7, fig.height=6}
+# reload unsplit data
+data(MSssI_CpG)
+MSssI_CpG<-splitMotifs(MSssI_CpG,"CG")
+methMat<-tsv2methMat(MSssI_CpG,genomeGR,"CG")
+genomeGR$ID<-"ttTi5605"
+# add markers for CG positions
+CGpos<-data.frame(x=Biostrings::start(Biostrings::vmatchPattern("CG",genomeFile))[[1]])
+CGpos$y<-rep(-1,length(CGpos$x))
+p<-plotSingleMoleculesAmp(methMat,"ttTi5605",genomeGR,featureGRs=c(),myXlab="CpG position",featureLabel="TSS",title=NULL,baseFontSize=12)
+# do single molecule plot with positions of Cs marked.
+p+geom_point(data=CGpos,aes(x=x,y=y,color="red"),size=0.5,name="CpG position")
+```
+
+As expected, most sites are accessible because this was naked DNA. The sites near the start and end of the amplicon were not called - they are probably not included in the region amplified by primers 28 and 32.
+
+I will make the genomic range to be plotted smaller and do the same for all the data sets.
+
+```{r, fig.width = 7, fig.height=5}
+newGR<-genomeGR
+GenomicRanges::start(newGR)<-400
+GenomicRanges::end(newGR)<-2100
+# reload unsplit data
+data(MSssI_CpG)
+tsv<-splitMotifs(MSssI_CpG,"CG")
+methMat<-tsv2methMat(tsv,genomeGR,"CG")[[1]]
+genomeGR$ID<-"ttTi5605"
+# add markers for CG positions
+pos<-data.frame(x=Biostrings::start(Biostrings::vmatchPattern("CG",genomeFile))[[1]])
+pos$y<-rep(-1,length(pos$x))
+p<-plotSingleMoleculesAmp(methMat,"ttTi5605", newGR, title="MSssI_CpG", myXlab="CpG position")
+# do single molecule plot with positions of Cs marked.
+p+geom_point(data=pos,aes(x=x,y=y,color="red"),size=0.5,name="CpG position")
+```
+
+
+```{r, fig.width = 7, fig.height=5}
+# reload unsplit data
+data(MSssI_GpC)
+tsv<-splitMotifs(MSssI_GpC,"GC")
+methMat<-tsv2methMat(tsv,genomeGR,"GC")[[1]]
+genomeGR$ID<-"ttTi5605"
+# add markers for CG positions
+pos<-data.frame(x=Biostrings::start(Biostrings::vmatchPattern("GC",genomeFile))[[1]])
+pos$y<-rep(-1,length(pos$x))
+p<-plotSingleMoleculesAmp(methMat,"ttTi5605", newGR, title="MSssI_GpC", myXlab="GpC position")
+# do single molecule plot with positions of Cs marked.
+p+geom_point(data=pos,aes(x=x,y=y,color="red"),size=0.5,name="GpC position")
+```
+
+
+```{r, fig.width = 7, fig.height=5}
+# reload unsplit data
+data(MCviPI_CpG)
+tsv<-splitMotifs(MCviPI_CpG,"CG")
+methMat<-tsv2methMat(tsv,genomeGR,"CG")[[1]]
+genomeGR$ID<-"ttTi5605"
+# add markers for CG positions
+pos<-data.frame(x=Biostrings::start(Biostrings::vmatchPattern("CG",genomeFile))[[1]])
+pos$y<-rep(-1,length(pos$x))
+p<-plotSingleMoleculesAmp(methMat,"ttTi5605", newGR, title="MCviPI_CpG", myXlab="CpG position")
+# do single molecule plot with positions of Cs marked.
+p+geom_point(data=pos,aes(x=x,y=y,color="red"),size=0.5,name="CpG position")
+```
+
+
+```{r, fig.width = 7, fig.height=5}
+# reload unsplit data
+data(MCviPI_GpC)
+tsv<-splitMotifs(MCviPI_GpC,"GC")
+methMat<-tsv2methMat(tsv,genomeGR,"GC")[[1]]
+genomeGR$ID<-"ttTi5605"
+# add markers for CG positions
+pos<-data.frame(x=Biostrings::start(Biostrings::vmatchPattern("GC",genomeFile))[[1]])
+pos$y<-rep(-1,length(pos$x))
+p<-plotSingleMoleculesAmp(methMat,"ttTi5605", newGR, title="MCviPI_GpC", myXlab="GpC position")
+# do single molecule plot with positions of Cs marked.
+p+geom_point(data=pos,aes(x=x,y=y,color="red"),size=0.5,name="GpC position")
 ```
 
 
 
+```{r, fig.width = 7, fig.height=5}
+# reload unsplit data
+data(Control_CpG)
+tsv<-splitMotifs(Control_CpG,"CG")
+methMat<-tsv2methMat(tsv,genomeGR,"CG")[[1]]
+genomeGR$ID<-"ttTi5605"
+# add markers for CG positions
+pos<-data.frame(x=Biostrings::start(Biostrings::vmatchPattern("CG",genomeFile))[[1]])
+pos$y<-rep(-1,length(pos$x))
+p<-plotSingleMoleculesAmp(methMat,"ttTi5605", newGR, title="Control_CpG", myXlab="CpG position")
+# do single molecule plot with positions of Cs marked.
+p+geom_point(data=pos,aes(x=x,y=y,color="red"),size=0.5,name="CpG position")
+```
+
+
+```{r, fig.width = 7, fig.height=5}
+# reload unsplit data
+data(Control_GpC)
+tsv<-splitMotifs(Control_GpC,"GC")
+methMat<-tsv2methMat(tsv,genomeGR,"GC")[[1]]
+genomeGR$ID<-"ttTi5605"
+# add markers for CG positions
+pos<-data.frame(x=Biostrings::start(Biostrings::vmatchPattern("GC",genomeFile))[[1]])
+pos$y<-rep(-1,length(pos$x))
+p<-plotSingleMoleculesAmp(methMat,"ttTi5605", newGR, title="Control_GpC", myXlab="GpC position")
+# do single molecule plot with positions of Cs marked.
+p+geom_point(data=pos,aes(x=x,y=y,color="red"),size=0.5,name="GpC position")
+```
+
+In general the data looks ok: MSssI_CpG and MCviPI_GpC are both mostly accessible (naked DNA methylated with the appropriate enzyme). 
+
+The control GpC and CpG methylation are mostly black ("protected") because not methylated. However  MSssI_GpC and MCviPI_CpG (where the DNA has been methylated by one enzyme and then methylation at the other motif was detected), are not looking great.
+
+###Testing two GR:
+
+```{r}
+spltgr<-c(newGR,newGR)
+GenomicRanges::start(spltgr)<-c(400,1001)
+GenomicRanges::end(spltgr)<-c(1000,2100)
+spltgr
+spltgr$ID<-c("first","second")
+data(MSssI_CpG)
+tsv<-splitMotifs(MSssI_CpG,"CG")
+methMats<-tsv2methMat(tsv,spltgr,"CG")
+genomeGR$ID<-"ttTi5605"
+
+```
+
+
+## Merging CG and GC matrices
