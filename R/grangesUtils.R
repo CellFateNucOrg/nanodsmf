@@ -5,9 +5,9 @@
 #' @param defaultStrand One of "+", "-" or "*" for the strand from which the sequences come from (default="*")
 #' @return A GenomicRanges object
 #' @examples
-#' DNAstringset2gr(Biostrings::DNAStringSet(x=c(chr1="agctgtagct",chr2="agagagagttt"))
+#' DNAstringsetToGR(Biostrings::DNAStringSet(x=c(chr1="agctgtagct",chr2="agagagagttt"))
 #' @export
-DNAstringset2gr<-function(DNAss,defaultStrand="*") {
+DNAStringSetToGR<-function(DNAss,defaultStrand="*") {
   #extract only the first word in fasta '>' row to be the seq name
   chrNames<-sapply(strsplit(names(DNAss)," "),'[[',1)
   gr<-GenomicRanges::GRanges(seqnames=chrNames,
@@ -17,16 +17,29 @@ DNAstringset2gr<-function(DNAss,defaultStrand="*") {
 }
 
 
-#' importFrom magrittr "%>%"
 
-#' Convert DNAStringSet to GenomicRanges
-#' @param BSgenome A BSgenome object
+#' Convert BSgenome to DNAStringSet
+#' @param BSgnm A BSgenome object
+#' @return A DNAStringSet object
+#' @examples
+#' BSgenomeToDNAStringSet(BSgenome.Celegans.UCSC.ce11::Celegans)
+#' @export
+BSgenomeToDNAStringSet<-function(BSgnm){
+  listOfChr<-sapply(seqnames(BSgnm),function(x){BSgnm[[x]]})
+  DNAss<-as(listOfChr,"DNAStringSet")
+  return(DNAss)
+}
+
+
+
+#' Convert BSgenome to GenomicRanges
+#' @param BSgnm A BSgenome object
 #' @param defaultStrand One of "+", "-" or "*" for the strand from which the sequences come from (default="*")
 #' @return A GenomicRanges object
 #' @examples
-#' BSgenome2gr(BSgenome.Celegans.UCSC.ce11::Celegans)
+#' BSgenomeToGR(BSgenome.Celegans.UCSC.ce11::Celegans)
 #' @export
-BSgenome2gr<-function(BSgnm,defaultStrand="*") {
+BSgenomeToGR<-function(BSgnm,defaultStrand="*") {
   gr<-GenomicRanges::GRanges(seqnames=BSgenome::seqnames(BSgnm),
                              ranges=IRanges::IRanges(start=1,end=GenomeInfoDb::seqlengths(BSgnm)),
                              strand="*")
@@ -39,9 +52,9 @@ BSgenome2gr<-function(BSgnm,defaultStrand="*") {
 #' @param ucscGR A GRanges object with ucsc chomosome names ("chrI"..."chrM")
 #' @return A GenomicRanges object
 #' @examples
-#' ucsc2wbGR(BSgenome2gr(BSgenome.Celegans.UCSC.ce11::Celegans))
+#' ucscToWbGR(BSgenomeToGR(BSgenome.Celegans.UCSC.ce11::Celegans))
 #' @export
-ucsc2wbGR<-function(ucscGR) {
+ucscToWbGR<-function(ucscGR) {
   wbGR<-ucscGR
   GenomeInfoDb::seqlevels(wbGR)<-gsub("chr","",GenomeInfoDb::seqlevels(wbGR))
   GenomeInfoDb::seqlevels(wbGR)<-gsub("M","MtDNA",GenomeInfoDb::seqlevels(wbGR))
@@ -54,12 +67,33 @@ ucsc2wbGR<-function(ucscGR) {
 #' @param wbGR A GRanges object with ucsc chomosome names ("chrI"..."chrM")
 #' @return A GenomicRanges object
 #' @examples
-#' wb2ucscGR(ucsc2wbGR(BSgenome2gr(BSgenome.Celegans.UCSC.ce11::Celegans)))
+#' wbToUcscGR(ucscToWbGR(BSgenomeToGR(BSgenome.Celegans.UCSC.ce11::Celegans)))
 #' @export
-wb2ucscGR<-function(wbGR) {
+wbToUcscGR<-function(wbGR) {
   ucscGR<-wbGR
   GenomeInfoDb::seqlevels(ucscGR)<-gsub("MtDNA","M",GenomeInfoDb::seqlevels(ucscGR))
   GenomeInfoDb::seqlevels(ucscGR)<-past0("chr",GenomeInfoDb::seqlevels(ucscGR))
   return(ucscGR)
 }
 
+
+
+#' Convert MIndex object to Genomic Ranges object
+#' @param mIdx A MIndex object
+#' @return A GenomicRanges object
+#' @examples
+#' mIdxToGR(Biostrings::vmatchPattern("ATTTAGGGTTTTAGAATACTGCCATTAATTAAAAAT",genomeFile))
+#' @export
+mIdxToGR<-function(mIdx) {
+  #function to convert Mindex object (obtained matching patterns on DNAstringset) to genomic ranges
+  allGR<-GRanges()
+  seqlevels(allGR)<-names(mIdx)
+  for (n in names(mIdx)) {
+    if (length(mIdx[[n]])>0) {
+      gr<-GRanges(seqnames=Rle(c(n),length(mIdx[[n]])),
+                     ranges=mIdx[[n]], strand="*")
+      allGR<-append(allGR,gr)
+    }
+  }
+  return(allGR)
+}

@@ -1,4 +1,4 @@
-#' @importFrom magrittr "%>%"
+
 
 
 #' Split sequences with multiple motifs
@@ -25,9 +25,9 @@ splitMotifs<-function(tsv,motif){
 #' @param binarise Convert log likelihoods to binary values: methylated(\eqn{ln(L) \ge 2.5}): 1; unmethylated(\eqn{ln(L) \le -2.5}): 0; inconclusive(\eqn{-2.5 < ln(L) < 2.5}): NA.  (default: binarise=TRUE)
 #' @return A methylation matrix (reads x motif positions) with binary or log likelihood values
 #' @examples
-#' tsv2methMat(splitMotifs(MSssI_CpG,"CG"),genomeGR)
+#' tsvToMethMat(splitMotifs(MSssI_CpG,"CG"),genomeGR)
 #' @export
-tsv2methMat<-function(tsv, genomeGRs, motif, binarise=TRUE){
+tsvToMethMat<-function(tsv, genomeGRs, motif, binarise=TRUE){
   # make GR from tsv to subset only regions of interest
   tsvGR<-GenomicRanges::GRanges(seqnames=tsv$chromosome,
                                 IRanges::IRanges(start=tsv$start,end=tsv$end),
@@ -40,8 +40,8 @@ tsv2methMat<-function(tsv, genomeGRs, motif, binarise=TRUE){
     ol<-GenomicRanges::findOverlaps(tsvGR,genomeGRs[i],ignore.strand=T)
     methGR<-tsvGR[S4Vectors::queryHits(ol)]
     options(tibble.width = Inf)
-    methTab<-tibble::as.tibble(GenomicRanges::mcols(methGR)) %>%
-      tidyr::spread(key=start,value=log_lik_ratio)
+    methTab<-tidyr::spread(tibble::as.tibble(GenomicRanges::mcols(methGR)),
+                           key=start,value=log_lik_ratio)
     methMat<-as.matrix(methTab[,-c(1,2,3)])
     rownames(methMat)<-methTab$read_name
     if (binarise==TRUE){
@@ -122,7 +122,6 @@ plotSingleMoleculesAmp<-function(mat,regionName,regionGRs,featureGRs=c(),myXlab=
                           y = length(reads)+max(3,0.04*length(reads)), yend =length(reads)+max(3,0.04*length(reads)), colour = "red",
                           arrow=arrow(length = unit(0.3, "cm")), size=0.7) +
         ggplot2::annotate(geom="text", x=GenomicRanges::start(featGR), y=-max(2,0.03*length(reads)), label=featureLabel,color="red")
-
     }
   } else {
     p<-NULL
@@ -130,5 +129,37 @@ plotSingleMoleculesAmp<-function(mat,regionName,regionGRs,featureGRs=c(),myXlab=
   return(p)
 }
 
+
+
+#' Find non overlapping CG, GC and GCG/CGC motifs in genome
+#' @param genomeFile A DNAstringSet for the genome
+findGenomeMotifs<-function(genome){
+
+  # deal with different input genome formats
+  if (class(genome)=="BSgenome"){
+    genome<-BSgenomeToDNAStringSet(genome)
+  } else if (is.character(genome)){
+    genome<-readDNAStringSet(genome)
+
+  }
+  #strip of anything after a space to deal with additional fasta header info
+  names(genome)<-gsub("[[:space:]].*$","",names(genome),perl=F)
+
+  gnmCGs<-mIdxToGR(Biostrings::vmatchPattern("CG",genome))
+  gnmGCs<-mIdxToGR(Biostrings::vmatchPattern("GC",genome))
+  gnmGCGs<-mIdxToGR(Biostrings::vmatchPattern("GCG",genome))
+  gnmCGCs<-mIdxToGR(Biostrings::vmatchPattern("CGC",genome))
+
+
+
+
+}
+
+findNonOverlappingMotifs<-function(DNAss) {
+  gnmCGs<-Biostrings::vmatchPattern("CG",genome)
+  gnmGCs<-Biostrings::vmatchPattern("GC",genome)
+  gnmGCGs<-Biostrings::vmatchPattern("GCG",genome)
+  gnmCGCs<-Biostrings::vmatchPattern("CGC",genome)
+}
 
 
