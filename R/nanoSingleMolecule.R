@@ -56,8 +56,6 @@ tsvToMethMat<-function(tsv, genomeGRs, motif, binarise=TRUE){
 
 
 
-
-
 #' Do a single molecule plot of dSMF data
 #' @param mat A methylation matrix
 #' @param regionName The name of the region to be plotted (usually gene name). Must match Ids in reagionGRs
@@ -131,10 +129,132 @@ plotSingleMoleculesAmp<-function(mat,regionName,regionGRs,featureGRs=c(),myXlab=
 
 
 
-#' Find non overlapping CG, GC and GCG/CGC motifs in genome
-#' @param genomeFile A DNAstringSet for the genome
-findGenomeMotifs<-function(genome){
+#' Adds overlapping sites from first GRanges to the second
+#' @param gr1 A GenomicRanges object
+#' @param gr2 A GenomicRanges object
+#' @return A GenomicRanges object containing all of gr2, and any GRanges from gr1 that overlap with gr1
+#' @examples
+#' getOverlappingSites(gr1,gr2)
+#' @export
+getOverlappingSites<-function(gr1,gr2) {
+  # adds any sites from gr1 that overlap with gr2 to gr2
+  ol<-findOverlaps(gr1,gr2,ignore.strand=T)
+  if (length(ol)>0) {
+    overlapping<-c(gr2,gr1[queryHits(ol)])
+  } else {
+    overlapping<-gr2
+  }
+  return(overlapping)
+}
 
+
+#' Adds unique sites from first GRanges that are not in the second
+#' @param gr1 A GenomicRanges object
+#' @param gr2 A GenomicRanges object
+#' @return A GenomicRanges object containing all of gr1 ranges that do not overlap with gr2
+#' @examples
+#' getIsolatedSites(gr1,gr2)
+#' @export
+getIsolatedSites<-function(gr1,gr2) {
+  # removes from gr1 and sites which overlap with gr2
+  ol<-findOverlaps(gr1,gr2,ignore.strand=T)
+  if (length(ol)>0) {
+    isolated<-gr1[-queryHits(ol)]
+  } else {
+    isolated<-gr1
+  }
+  return(isolated)
+}
+
+#' Splits GenomicRange into multiple ranges of width 2.
+#' @param gr A GenomicRanges object
+#' @return A GenomicRanges object with multiple non-overlapping ranges width 2.
+#' @examples
+#' splitRangeInPairs(gr1)
+#' @export
+splitRangeInPairs<-function(gr) {
+  starts<-seq(start(gr),end(gr),by=2)
+  newGR<-GRanges(seqnames=seqnames(gr),ranges=IRanges(start=starts,width=2),strand="*")
+  return(newGR)
+}
+
+
+#' Splits GenomicRange into multiple ranges of width 2 or 3.
+#' @param gr A GenomicRanges object
+#' @return A GenomicRanges object with multiple non-overlapping ranges width 2 or 3.
+#' @examples
+#' splitGCGCruns(gr1)
+#' @export
+splitGCGCruns<-function(gr) {
+  # function to (arbitrarily) decompose overlapping GCs and CGs to triplets and doublets
+  # create new gr for split up ranges
+  olGCGC<-GRanges()
+  # find ranges that do not need splitting
+  width3<-width(gr)==3
+  olGCGC<-append(olGCGC,gr[width3])
+  # find ranges that need splitting
+  toSplit<-gr[!width3]
+  if (length(toSplit)>0) {
+    for (i in 1:length(toSplit)) {
+      isOdd<-width(toSplit[i])%%2==1
+      if (isOdd) {
+        # if there are an odd number of bases, chop off the first three as a triplet, and the rest in pairs
+        firstTriplet<-resize(toSplit[i],3,"start")
+        evenRange<-resize(toSplit[i],width(toSplit[i])-3,"end")
+        olGCGC<-append(olGCGC,firstTriplet)
+        olGCGC<-append(olGCGC,splitRangeInPairs(evenRange))
+      } else {
+        # if there are an even number of bases, chop the gr into smaller gr length2
+        olGCGC<-append(olGCGC,splitRangeInPairs(toSplit[i]))
+      }
+    }
+  }
+  return(sort(olGCGC))
+}
+
+
+#' Finds all CG, GC and long GCGC stretches in DNAStringSet
+#' @param DNAss A DNAStringSet object
+#' @return A list of three genomic ranges for isolated CGs, isolated GCs, and CG/GC/GCG/CGC from longer runs
+#' @examples
+#' findNonOverlappingMotifs(DNAss)
+#' @export
+findNonOverlappingMotifs<-function(DNAss) {
+  #search for patterns in sequence
+  CGs<-mIdxToGR(Biostrings::vmatchPattern("CG",DNAss))
+  GCs<-mIdxToGR(Biostrings::vmatchPattern("GC",DNAss))
+  GCGs<-mIdxToGR(Biostrings::vmatchPattern("GCG",DNAss))
+  CGCs<-mIdxToGR(Biostrings::vmatchPattern("CGC",DNAss))
+  GCGCs<-sort(c(GCGs,CGCs))
+
+  # move any GC sites that overlap with GCG to the GCG list (removing them from GC list)
+  GCGCs<-getOverlappingSites(GCs,GCGCs) # always get overlapping first, otherwise will lose them
+  GCs<-reduce(getIsolatedSites(GCs,GCGCs),ignore.strand=T) # collapse GR on opposite strands
+  GCs$context<-"GCH"
+
+  # move any CG sites that overlap with GCG to the GCG list (removing them from CG list)
+  GCGCs<-getOverlappingSites(CGs,GCGCs) # always get overlapping first, otherwise will lose them
+  CGs<-reduce(getIsolatedSites(CGs,GCGCs),ignore.strand=T) # collapse GR on opposite strands
+  CGs$context<-"HCG"
+
+  # reduce all the overlapping set to a smallest merged set
+  GCGCs<-reduce(GCGCs,ignore.strand=T)
+  # then arbitrarily split them into non-overlapping GR 2-3 bp long
+  GCGCs<-splitGCGCruns(GCGCs)
+  GCGCs$context<-"GCGorCGC"
+  allGR<-list(CGs,GCs,GCGCs)
+  names(allGR)<-c("CG","GC","GCG")
+  return(allGR)
+}
+
+
+#' Find non overlapping CG, GC and GCG/CGC motifs in genome
+#' @param genomeFile A DNAstringSet, path to FASTA file or BSgenome for the genome sequence.
+#' @return A GenomicRanges containing non ovelapping CG GC and GCGorCGC motifs. The context is shown in the metadata
+#' @examples
+#' findGenomeMotifs(genomeFile)
+#' @export
+findGenomeMotifs<-function(genome){
   # deal with different input genome formats
   if (class(genome)=="BSgenome"){
     genome<-BSgenomeToDNAStringSet(genome)
@@ -145,21 +265,9 @@ findGenomeMotifs<-function(genome){
   #strip of anything after a space to deal with additional fasta header info
   names(genome)<-gsub("[[:space:]].*$","",names(genome),perl=F)
 
-  gnmCGs<-mIdxToGR(Biostrings::vmatchPattern("CG",genome))
-  gnmGCs<-mIdxToGR(Biostrings::vmatchPattern("GC",genome))
-  gnmGCGs<-mIdxToGR(Biostrings::vmatchPattern("GCG",genome))
-  gnmCGCs<-mIdxToGR(Biostrings::vmatchPattern("CGC",genome))
-
-
-
-
+  grl<-findNonOverlappingMotifs(genome)
+  names(grl)<-NULL
+  gr<-do.call("c",grl)
+  gr<-sort(gr)
+  return(gr)
 }
-
-findNonOverlappingMotifs<-function(DNAss) {
-  gnmCGs<-Biostrings::vmatchPattern("CG",genome)
-  gnmGCs<-Biostrings::vmatchPattern("GC",genome)
-  gnmGCGs<-Biostrings::vmatchPattern("GCG",genome)
-  gnmCGCs<-Biostrings::vmatchPattern("CGC",genome)
-}
-
-
