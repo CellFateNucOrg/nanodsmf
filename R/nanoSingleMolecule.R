@@ -18,8 +18,6 @@ splitMotifs<-function(tsv,motif){
 }
 
 
-
-
 #' Convert nanopore tsv to methylation matrix
 #' @param tsv A tab serparated values text file where individual motifs have been split
 #' @param genomeGR Genomic Ranges object for the regions to be analysed
@@ -107,7 +105,7 @@ plotSingleMoleculesAmp<-function(mat,regionName,regionGRs,featureGRs=c(),myXlab=
     d$methylation<-as.character(d$methylation)
     d$position<-as.numeric(d$position)
     if (is.null(title)) {
-      title=paste0(regionName, ": ",GenomicRanges::seqnames(regionGR)," ",GenomicRanges::strand(regionGR),"ve strand")
+      title=paste0(regionName, ": ", GenomicRanges::seqnames(regionGR)," ", GenomicRanges::strand(regionGR),"ve strand")
     }
     p<-ggplot(d,aes(x=position,y=molecules,width=2)) +
       geom_tile(aes(width=6*GenomicRanges::width(regionGR)/500,fill=methylation),alpha=0.8) +
@@ -131,5 +129,6 @@ plotSingleMoleculesAmp<-function(mat,regionName,regionGRs,featureGRs=c(),myXlab=
   }
   return(p)
 }
+
 
 
