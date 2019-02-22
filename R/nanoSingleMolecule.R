@@ -20,12 +20,12 @@ splitMotifs<-function(tsv,motif){
 
 #' Convert nanopore tsv to methylation matrix
 #' @param tsv A tab serparated values text file where individual motifs have been split
-#' @param genomeGR Genomic Ranges object for the regions to be analysed
+#' @param genomeGRs Genomic Ranges object for the regions to be analysed
 #' @param motif Motif ("CG" or "GC" to for which the tsv was called)
 #' @param binarise Convert log likelihoods to binary values: methylated(\eqn{ln(L) \ge 2.5}): 1; unmethylated(\eqn{ln(L) \le -2.5}): 0; inconclusive(\eqn{-2.5 < ln(L) < 2.5}): NA.  (default: binarise=TRUE)
 #' @return A methylation matrix (reads x motif positions) with binary or log likelihood values
 #' @examples
-#' tsvToMethMat(splitMotifs(MSssI_CpG,"CG"),genomeGR)
+#' tsvToMethMat(splitMotifs(MSssI_CpG,"CG"),ttTi5605gr)
 #' @export
 tsvToMethMat<-function(tsv, genomeGRs, motif, binarise=TRUE){
   # make GR from tsv to subset only regions of interest
@@ -67,7 +67,7 @@ tsvToMethMat<-function(tsv, genomeGRs, motif, binarise=TRUE){
 #' @param baseFontSize The base font size to be used for the plot (default is 12)
 #' @return A ggplot2 plotting object
 #' @examples
-#' plotSingleMoleculesAmp(methMat,"ttTi5605",genomeGR,featureGRs=c(),myXlab="CpG position",featureLabel="TSS",title=NULL,baseFontSize=12)
+#' plotSingleMoleculesAmp(methMat,"ttTi5605",ttTi5605gr,featureGRs=c(),myXlab="CpG position",featureLabel="TSS",title=NULL,baseFontSize=12)
 #' @export
 plotSingleMoleculesAmp<-function(mat,regionName,regionGRs,featureGRs=c(),myXlab="CpG/GpC position",featureLabel="TSS",title=NULL,
                                  baseFontSize=12) {
@@ -252,7 +252,7 @@ findNonOverlappingMotifs<-function(DNAss) {
 #' @param genomeFile A DNAstringSet, path to FASTA file or BSgenome for the genome sequence.
 #' @return A GenomicRanges containing non ovelapping CG GC and GCGorCGC motifs. The context is shown in the metadata
 #' @examples
-#' findGenomeMotifs(genomeFile)
+#' findGenomeMotifs(ttTi5605dna)
 #' @export
 findGenomeMotifs<-function(genome){
   # deal with different input genome formats

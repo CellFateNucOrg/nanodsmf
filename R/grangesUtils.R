@@ -82,7 +82,7 @@ wbToUcscGR<-function(wbGR) {
 #' @param mIdx A MIndex object
 #' @return A GenomicRanges object
 #' @examples
-#' mIdxToGR(Biostrings::vmatchPattern("ATTTAGGGTTTTAGAATACTGCCATTAATTAAAAAT",genomeFile))
+#' mIdxToGR(Biostrings::vmatchPattern("ATTTAGGGTTTTAGAATACTGCCATTAATTAAAAAT",ttTi5605dna))
 #' @export
 mIdxToGR<-function(mIdx) {
   #function to convert Mindex object (obtained matching patterns on DNAstringset) to genomic ranges
