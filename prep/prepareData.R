@@ -30,9 +30,9 @@ Control_GpC<-read.delim("/Users/semple/Documents/MeisterLab/sequencingData/20171
 save(Control_GpC,file="data/Control_GpC.RData")
 
 
-genomeFile<-Biostrings::readDNAStringSet("/Users/semple/Documents/MeisterLab/GenomeVer/PCR_wPM28_32/PCR_wPM28_32.fasta")
-save(genomeFile,file="data/genomeFile.RData")
+ttTi5605dna<-Biostrings::readDNAStringSet("/Users/semple/Documents/MeisterLab/GenomeVer/PCR_wPM28_32/PCR_wPM28_32.fasta")
+save(ttTi5605dna,file="data/ttTi5605dna.RData")
 
-genomeGR<-nanodsmf::DNAstringset2gr(genomeFile)
-save(genomeGR,file="data/genomeGR.RData")
+ttTi5605gr<-nanodsmf::DNAstringset2gr(ttTi5605dna)
+save(ttTi5605gr,file="data/ttTi5605gr.RData")
 

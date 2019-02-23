@@ -47,21 +47,21 @@
 "MSssI_GpC"
 
 
-#' Example of a genomeFile
+#' DNAstringset for sequence used in example data
 #'
 #' DNAstringset object with fasta sequence of genome
 #'
 #' @docType data
-#' @usage data(genomeFile)
+#' @usage data(ttTi5605dna)
 #' @format An object of type DNAStringset
-"genomeFile"
+"ttTi5605dna"
 
 
-#' Example of a genomeGR
+#' GenomicRanges for sequence used in example data
 #'
 #' GRanges or GRangesList type object for genome
 #'
 #' @docType data
-#' @usage data(genomeGR)
+#' @usage data(ttTi5605gr)
 #' @format An object of type GRanges
-"genomeGR"
+"ttTi5605gr"
