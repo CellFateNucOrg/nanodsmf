@@ -2,7 +2,7 @@ Package: nanodsmf
 Type: Package
 Title: Analyse nanopore dual enzyme single molecule footprinting data (nanoDSMF)
 Version: 0.0.1
-Author: Jennifer Semple
+Authors@R: person("Jennifer", "Semple", email="jennifer.semple@izb.unibe.ch",role=c("aut","cre"))
 Maintainer: The package maintainer <jennifer.semple@izb.unibe.ch>
 Description: This packages helps analyse data produced by in vitro methylation of chromatin
 	packaged in nuclei. Non-methylated footprints correspond to chromatin bound by proteins
@@ -10,12 +10,19 @@ Description: This packages helps analyse data produced by in vitro methylation o
 License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
-Depends: R (>= 3.4.0), GenomicRanges, ggplot2, magrittr
-Imports: GenomicRanges, ggplot2, IRanges, Biostrings, magrittr
+Depends:  R (>= 3.4.0), 
+          GenomicRanges, 
+          ggplot2, 
+          magrittr
+Imports:  Biostrings, 
+          GenomicRanges, 
+          ggplot2, 
+          IRanges, 
+          magrittr
 RoxygenNote: 6.1.1
 Suggests: 
-    testthat,
     BSgenome.Celegans.USCS.ce11,
     knitr,
-    rmarkdown
+    rmarkdown,
+    testthat
 VignetteBuilder: knitr
