@@ -204,12 +204,13 @@ findGenomeMotifs<-function(genome){
     genome<-readDNAStringSet(genome)
 
   }
-  #strip of anything after a space to deal with additional fasta header info
+  #strip off anything after a space to deal with additional fasta header info
   names(genome)<-gsub("[[:space:]].*$","",names(genome),perl=F)
-
   grl<-findNonOverlappingMotifs(genome)
   names(grl)<-NULL
   gr<-do.call("c",grl)
   gr<-sort(gr)
   return(gr)
 }
+
+

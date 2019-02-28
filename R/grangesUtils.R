@@ -97,3 +97,25 @@ mIdxToGR<-function(mIdx) {
   }
   return(allGR)
 }
+
+
+
+
+#' Apply a function on a data from gr2 with windows provided by gr1
+#' @param gr1 A GenomicRanges object with windows of interest
+#' @param gr2 A GenomicRanges object with data of interest
+#' @param applyTo Column name in gr2 on which to apply the function
+#' @param fun Function to apply (e.g. sum, mean, paste0)
+#' @return Ranges from gr1 with summed values of metadata column from gr2
+#' @examples
+#' gr1 <- GRanges("chr1", IRanges(c(1,3,7), c(5,6,10),names=paste0("win", letters[1:3])), score=4:6)
+#' gr2 <- GRanges("chr1", IRanges(c(1, 3, 8), c(1, 3, 8),names=paste0("dataID:", letters[1:3])), score=c(10,20,30))
+#' applyGRonGR(gr1,gr2,applyTo="score",fun=sum)
+#' @export
+applyGRonGR<-function(gr1,gr2,applyTo,fun,...){
+  newGR<-IRanges::subsetByOverlaps(gr1,gr2)
+  ol<-IRanges::findOverlaps(gr1,gr2)
+  newData<-sapply(split(mcols(gr2)[subjectHits(ol),applyTo],queryHits(ol)),fun,...)
+  mcols(newGR)[,get("applyTo")]<-newData
+  return(newGR)
+}

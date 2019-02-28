@@ -257,8 +257,8 @@ The function tsvToMethMat, takes a data table from the methylation called tsv th
 # reload unsplit data
 data(MSssI_CpG)
 MSssI_CpG<-splitMotifs(MSssI_CpG,"CG")
-methMat<-tsvToMethMat(MSssI_CpG,ttTi5605gr,"CG")
 ttTi5605gr$ID<-"ttTi5605"
+methMat<-tsvToMethMat(MSssI_CpG,ttTi5605gr,"CG")[[1]]
 # add markers for CG positions
 CGpos<-data.frame(x=Biostrings::start(Biostrings::vmatchPattern("CG",ttTi5605dna))[[1]])
 CGpos$y<-rep(-1,length(CGpos$x))
@@ -278,8 +278,8 @@ GenomicRanges::end(newGR)<-2100
 # reload unsplit data
 data(MSssI_CpG)
 tsv<-splitMotifs(MSssI_CpG,"CG")
-methMat<-tsvToMethMat(tsv,ttTi5605gr,"CG")[[1]]
 ttTi5605gr$ID<-"ttTi5605"
+methMat<-tsvToMethMat(tsv,ttTi5605gr,"CG")[[1]]
 # add markers for CG positions
 pos<-data.frame(x=Biostrings::start(Biostrings::vmatchPattern("CG",ttTi5605dna))[[1]])
 pos$y<-rep(-1,length(pos$x))
@@ -293,8 +293,8 @@ p+geom_point(data=pos,aes(x=x,y=y,color="red"),size=0.5,name="CpG position")
 # reload unsplit data
 data(MSssI_GpC)
 tsv<-splitMotifs(MSssI_GpC,"GC")
-methMat<-tsvToMethMat(tsv,ttTi5605gr,"GC")[[1]]
 ttTi5605gr$ID<-"ttTi5605"
+methMat<-tsvToMethMat(tsv,ttTi5605gr,"GC")[[1]]
 # add markers for CG positions
 pos<-data.frame(x=Biostrings::start(Biostrings::vmatchPattern("GC",ttTi5605dna))[[1]])
 pos$y<-rep(-1,length(pos$x))
@@ -308,8 +308,8 @@ p+geom_point(data=pos,aes(x=x,y=y,color="red"),size=0.5,name="GpC position")
 # reload unsplit data
 data(MCviPI_CpG)
 tsv<-splitMotifs(MCviPI_CpG,"CG")
-methMat<-tsvToMethMat(tsv,ttTi5605gr,"CG")[[1]]
 ttTi5605gr$ID<-"ttTi5605"
+methMat<-tsvToMethMat(tsv,ttTi5605gr,"CG")[[1]]
 # add markers for CG positions
 pos<-data.frame(x=Biostrings::start(Biostrings::vmatchPattern("CG",ttTi5605dna))[[1]])
 pos$y<-rep(-1,length(pos$x))
@@ -323,8 +323,8 @@ p+geom_point(data=pos,aes(x=x,y=y,color="red"),size=0.5,name="CpG position")
 # reload unsplit data
 data(MCviPI_GpC)
 tsv<-splitMotifs(MCviPI_GpC,"GC")
-methMat<-tsvToMethMat(tsv,ttTi5605gr,"GC")[[1]]
 ttTi5605gr$ID<-"ttTi5605"
+methMat<-tsvToMethMat(tsv,ttTi5605gr,"GC")[[1]]
 # add markers for CG positions
 pos<-data.frame(x=Biostrings::start(Biostrings::vmatchPattern("GC",ttTi5605dna))[[1]])
 pos$y<-rep(-1,length(pos$x))
@@ -339,8 +339,8 @@ p+geom_point(data=pos,aes(x=x,y=y,color="red"),size=0.5,name="GpC position")
 # reload unsplit data
 data(Control_CpG)
 tsv<-splitMotifs(Control_CpG,"CG")
-methMat<-tsvToMethMat(tsv,ttTi5605gr,"CG")[[1]]
 ttTi5605gr$ID<-"ttTi5605"
+methMat<-tsvToMethMat(tsv,ttTi5605gr,"CG")[[1]]
 # add markers for CG positions
 pos<-data.frame(x=Biostrings::start(Biostrings::vmatchPattern("CG",ttTi5605dna))[[1]])
 pos$y<-rep(-1,length(pos$x))
@@ -354,8 +354,8 @@ p+geom_point(data=pos,aes(x=x,y=y,color="red"),size=0.5,name="CpG position")
 # reload unsplit data
 data(Control_GpC)
 tsv<-splitMotifs(Control_GpC,"GC")
-methMat<-tsvToMethMat(tsv,ttTi5605gr,"GC")[[1]]
 ttTi5605gr$ID<-"ttTi5605"
+methMat<-tsvToMethMat(tsv,ttTi5605gr,"GC")[[1]]
 # add markers for CG positions
 pos<-data.frame(x=Biostrings::start(Biostrings::vmatchPattern("GC",ttTi5605dna))[[1]])
 pos$y<-rep(-1,length(pos$x))
@@ -370,6 +370,8 @@ The control GpC and CpG methylation are mostly black ("protected") because not m
 
 ##Testing two GR:
 
+Normally I will want to extract multiple methMats (e.g. for multiple TSSs) from a single TSV. Here i test if it works.
+
 ```{r}
 spltgr<-c(newGR,newGR)
 GenomicRanges::start(spltgr)<-c(400,1001)
@@ -379,7 +381,26 @@ spltgr$ID<-c("first","second")
 data(MSssI_CpG)
 tsv<-splitMotifs(MSssI_CpG,"CG")
 methMats<-tsvToMethMat(tsv,spltgr,"CG")
-ttTi5605gr$ID<-"ttTi5605"
+plotSingleMoleculesAmp(methMats[["first"]],"first", spltgr, title="MSssI_CpG", myXlab="CpG position in first GR")
+plotSingleMoleculesAmp(methMats[["second"]],"second", spltgr, title="MSssI_CpG", myXlab="CpG position in second GR")
 ```
 
+## merging CG and GC matrices
 
+Standard dSMF will want to merge the CG and GC matrices into a single methylation matrix. 
+
+```{r}
+spltgr<-c(newGR,newGR)
+GenomicRanges::start(spltgr)<-c(400,1001)
+GenomicRanges::end(spltgr)<-c(1000,2100)
+spltgr
+spltgr$ID<-c("first","second")
+data(MSssI_CpG)
+data(MSssI_GpC)
+tsvCG<-splitMotifs(MSssI_CpG,"CG")
+tsvGC<-splitMotifs(MSssI_GpC,"GC")
+methMatsCG<-tsvToMethMat(tsvCG,spltgr,"CG")
+methMatsGC<-tsvToMethMat(tsvGC,spltgr,"GC")
+plotSingleMoleculesAmp(methMats[["first"]],"first", spltgr, title="MSssI_CpG", myXlab="CpG position in first GR")
+plotSingleMoleculesAmp(methMats[["second"]],"second", spltgr, title="MSssI_CpG", myXlab="CpG position in second GR")
+```
