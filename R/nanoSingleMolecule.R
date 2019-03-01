@@ -46,7 +46,8 @@ tsvToGR<-function(tsv,keepCols=c("read_name","log_lik_ratio")){
 
 
 #' Convert nanopore tsv to methylation matrix
-#' @param tsv A tab serparated values text file where individual motifs have been split
+#' @param tsv A tab serparated values text file where individual motifs have been split.
+#' Also accepts a Granges object made from tsv
 #' @param genomeGRs Genomic Ranges object for the regions to be analysed
 #' @param motif Motif ("CG" or "GC" to for which the tsv was called)
 #' @param binarise Convert log likelihoods to binary values: methylated(\eqn{ln(L) \ge 2.5}): 1; unmethylated(\eqn{ln(L) \le -2.5}): 0; inconclusive(\eqn{-2.5 < ln(L) < 2.5}): NA.  (default: binarise=TRUE)
@@ -56,13 +57,18 @@ tsvToGR<-function(tsv,keepCols=c("read_name","log_lik_ratio")){
 #' @export
 tsvToMethMat<-function(tsv, genomeGRs, motif, binarise=TRUE){
   # make GR from tsv to subset only regions of interest
-  tsvGR<-tsvToGR(tsv)
+  if (!class(tsv)=="GRanges") {
+    tsvGR<-tsvToGR(tsv)
+  } else {
+    tsvGR<-tsv
+  }
   matList=list()
   for (i in seq_along(genomeGRs)) {
     # deal with Cs on opposite strands
     ol<-GenomicRanges::findOverlaps(tsvGR,genomeGRs[i],ignore.strand=T)
     methGR<-tsvGR[S4Vectors::queryHits(ol)]
-    options(tibble.width = Inf)
+    #options(tibble.width = Inf)
+    methGR$start<-GenomicRanges::start(methGR)
     methTab<-tidyr::spread(tibble::as.tibble(GenomicRanges::mcols(methGR)),
                            key=start,value=log_lik_ratio)
     methMat<-as.matrix(methTab[,-c(1,2,3)])
@@ -124,20 +130,32 @@ mergeCGandGCtsv<-function(tsvCG,tsvGC,genome){
   tsvCGgr<-tsvToGR(tsvCG)
   tsvGCgr<-tsvToGR(tsvGC)
   # get isolated CGs
-  ol<-GenomicRanges::findOverlaps(tsvCGgr,gnmMotifs[gnmMotifs$context=="HCG"])
+  ol<-GenomicRanges::findOverlaps(tsvCGgr,gnmMotifs[gnmMotifs$context=="HCG"],ignore.strand=T)
   CGonly<-tsvCGgr[S4Vectors::queryHits(ol)]
   CGonly$context<-"HCG"
+  strand(CGonly)<-"*"
   # get isolated GCs
-  ol<-GenomicRanges::findOverlaps(tsvGCgr,gnmMotifs[gnmMotifs$context=="GCH"])
+  ol<-GenomicRanges::findOverlaps(tsvGCgr,gnmMotifs[gnmMotifs$context=="GCH"],ignore.strand=T)
   GConly<-tsvGCgr[S4Vectors::queryHits(ol)]
   GConly$context<-"GCH"
+  strand(GConly)<-"*"
   # get CGs and GCs in runs
-  ol<-GenomicRanges::findOverlaps(tsvCGgr,gnmMotifs[gnmMotifs$context=="GCGorCGC"])
+  ol<-GenomicRanges::findOverlaps(tsvCGgr,gnmMotifs[gnmMotifs$context=="GCGorCGC"],ignore.strand=T)
   CGinRun<-tsvCGgr[S4Vectors::queryHits(ol)]
-  ol<-GenomicRanges::findOverlaps(tsvGCgr,gnmMotifs[gnmMotifs$context=="GCGorCGC"])
+  ol<-GenomicRanges::findOverlaps(tsvGCgr,gnmMotifs[gnmMotifs$context=="GCGorCGC"],ignore.strand=T)
   GCinRun<-tsvGCgr[S4Vectors::queryHits(ol)]
   runs<-c(CGinRun,GCinRun)
-  for (readName in unique(runs$read_name))
-    applyGRonGR(gnmMotifs,runs[runs$read_name==readName],"log_lik_ratio",sum)
+  for (readName in unique(runs$read_name)) {
+    fused<-applyGRonGR(gnmMotifs,runs[runs$read_name==readName],"log_lik_ratio",sum)
+    fused$read_name<-readName
+    if (exists("fusedRuns")) {
+      fusedRuns<-c(fusedRuns,fused)
+    } else {
+      fusedRuns<-fused
+    }
+    idx<-match(names(mcols(fusedRuns)),names(mcols(CGonly)))
+    mcols(fusedRuns)<-mcols(fusedRuns)[,idx]
+  }
+  allData<-GenomicRanges::sort(c(CGonly,GConly,fusedRuns))
 }
 
