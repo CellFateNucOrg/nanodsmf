@@ -7,7 +7,8 @@
 tsvToMethMat(tsv, genomeGRs, motif, binarise = TRUE)
 }
 \arguments{
-\item{tsv}{A tab serparated values text file where individual motifs have been split}
+\item{tsv}{A tab serparated values text file where individual motifs have been split.
+Also accepts a Granges object made from tsv}
 
 \item{genomeGRs}{Genomic Ranges object for the regions to be analysed}
 

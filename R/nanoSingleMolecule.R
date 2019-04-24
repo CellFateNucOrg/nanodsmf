@@ -124,7 +124,7 @@ mergeCGandGCtsv<-function(tsvCG,tsvGC,genome){
 #' @examples
 #' mergeCGandGCtsv(splitMotifs(MSssI_CpG,"CG"),splitMotifs(MSssI_GpC,"GC"),ttTi5605dna)
 #' @export
-mergeCGandGCtsv<-function(tsvCG,tsvGC,genome){
+mergeCGandGCmat<-function(tsvCG,tsvGC,genome){
   gnmMotifs<-findGenomeMotifs(genome)
   # make GR from tsvs
   tsvCGgr<-tsvToGR(tsvCG)

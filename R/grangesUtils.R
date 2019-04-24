@@ -58,6 +58,10 @@ ucscToWbGR<-function(ucscGR) {
   wbGR<-ucscGR
   GenomeInfoDb::seqlevels(wbGR)<-gsub("chr","",GenomeInfoDb::seqlevels(wbGR))
   GenomeInfoDb::seqlevels(wbGR)<-gsub("M","MtDNA",GenomeInfoDb::seqlevels(wbGR))
+  if(class(ucscGR)=="BSgenome") {
+    wbGR@provider<-"Wormbase"
+    wbGR@provider_version<-"WS235"
+  }
   return(wbGR)
 }
 
@@ -72,32 +76,9 @@ ucscToWbGR<-function(ucscGR) {
 wbToUcscGR<-function(wbGR) {
   ucscGR<-wbGR
   GenomeInfoDb::seqlevels(ucscGR)<-gsub("MtDNA","M",GenomeInfoDb::seqlevels(ucscGR))
-  GenomeInfoDb::seqlevels(ucscGR)<-past0("chr",GenomeInfoDb::seqlevels(ucscGR))
+  GenomeInfoDb::seqlevels(ucscGR)<-paste0("chr",GenomeInfoDb::seqlevels(ucscGR))
   return(ucscGR)
 }
-
-
-
-#' Convert MIndex object to Genomic Ranges object
-#' @param mIdx A MIndex object
-#' @return A GenomicRanges object
-#' @examples
-#' mIdxToGR(Biostrings::vmatchPattern("ATTTAGGGTTTTAGAATACTGCCATTAATTAAAAAT",ttTi5605dna))
-#' @export
-mIdxToGR<-function(mIdx) {
-  #function to convert Mindex object (obtained matching patterns on DNAstringset) to genomic ranges
-  allGR<-GRanges()
-  seqlevels(allGR)<-names(mIdx)
-  for (n in names(mIdx)) {
-    if (length(mIdx[[n]])>0) {
-      gr<-GRanges(seqnames=Rle(c(n),length(mIdx[[n]])),
-                     ranges=mIdx[[n]], strand="*")
-      allGR<-append(allGR,gr)
-    }
-  }
-  return(allGR)
-}
-
 
 
 
@@ -108,14 +89,44 @@ mIdxToGR<-function(mIdx) {
 #' @param fun Function to apply (e.g. sum, mean, paste0)
 #' @return Ranges from gr1 with summed values of metadata column from gr2
 #' @examples
-#' gr1 <- GRanges("chr1", IRanges(c(1,3,7), c(5,6,10),names=paste0("win", letters[1:3])), score=4:6)
-#' gr2 <- GRanges("chr1", IRanges(c(1, 3, 8), c(1, 3, 8),names=paste0("dataID:", letters[1:3])), score=c(10,20,30))
+#' gr1 <- GenomicRanges::GRanges("chr1", IRanges::IRanges(c(1,3,7), c(5,6,10),names=paste0("win", letters[1:3])), score=4:6)
+#' gr2 <- GenomicRanges::GRanges("chr1", IRanges::IRanges(c(1, 3, 8), c(1, 3, 8),names=paste0("dataID:", letters[1:3])), score=c(10,20,30))
 #' applyGRonGR(gr1,gr2,applyTo="score",fun=sum)
 #' @export
-applyGRonGR<-function(gr1,gr2,applyTo,fun,...){
+applyGRonGR<-function(gr1,gr2,applyTo,fun,...) {
   newGR<-IRanges::subsetByOverlaps(gr1,gr2)
   ol<-IRanges::findOverlaps(gr1,gr2)
-  newData<-sapply(split(mcols(gr2)[subjectHits(ol),applyTo],queryHits(ol)),fun,...)
-  mcols(newGR)[,get("applyTo")]<-newData
+  newData<-sapply(split(GenomicRanges::mcols(gr2)[S4Vectors::subjectHits(ol),applyTo],S4Vectors::queryHits(ol)),fun,...)
+  GenomicRanges::mcols(newGR)[,get("applyTo")]<-newData
   return(newGR)
 }
+
+
+
+#' Convert MIndex object to Genomic Ranges object
+#'
+#' Function to convert Mindex object (obtained by matching patterns on DNAstringset) to genomic ranges
+#'
+#' @param mIdx A MIndex object
+#' @return A GenomicRanges object
+#' @examples
+#' mIdxToGR(Biostrings::vmatchPattern("ATTTAGGGTTTTAGAATACTGCCATTAATTAAAAAT",ttTi5605dna))
+#' @export
+mIdxToGR<-function(mIdx) {
+  allGR<-GenomicRanges::GRanges()
+  GenomeInfoDb::seqlevels(allGR)<-names(mIdx)
+  for (n in names(mIdx)) {
+    if (length(mIdx[[n]])>0) {
+      gr<-GenomicRanges::GRanges(seqnames=S4Vectors::Rle(c(n),length(mIdx[[n]])),
+                     ranges=mIdx[[n]], strand="*")
+      allGR<-append(allGR,gr)
+    }
+  }
+  return(allGR)
+}
+
+
+
+
+
+

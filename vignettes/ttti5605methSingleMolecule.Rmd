@@ -2,8 +2,8 @@
 title: "ttTi5605 methylation analysis"
 author: "Jennifer Semple"
 date: "`r Sys.Date()`"
-output:
-  rmarkdown::html_vignette
+output: pdf_document
+  #rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Vignette ttTi5605 methylation analysis }
   %\VignetteEngine{knitr::rmarkdown}
@@ -372,7 +372,7 @@ The control GpC and CpG methylation are mostly black ("protected") because not m
 
 Normally I will want to extract multiple methMats (e.g. for multiple TSSs) from a single TSV. Here i test if it works.
 
-```{r}
+```{r }
 spltgr<-c(ttTi5605gr,ttTi5605gr)
 GenomicRanges::start(spltgr)<-c(400,1001)
 GenomicRanges::end(spltgr)<-c(1000,2100)
@@ -389,7 +389,7 @@ plotSingleMoleculesAmp(methMats[["second"]],"second", spltgr, title="MSssI_CpG",
 
 Standard dSMF will want to merge the CG and GC matrices into a single methylation matrix. 
 
-```{r}
+```{r, eval=FALSE}
 spltgr<-c(ttTi5605gr,ttTi5605gr)
 GenomicRanges::start(spltgr)<-c(400,1001)
 GenomicRanges::end(spltgr)<-c(1000,2100)
@@ -399,7 +399,7 @@ data(MSssI_CpG)
 data(MSssI_GpC)
 tsvCG<-splitMotifs(MSssI_CpG,"CG")
 tsvGC<-splitMotifs(MSssI_GpC,"GC")
-g<-mergeCGandGCtsv(tsvCG,tsvGC,genome)
+g<-mergeCGandGCtsv(tsvCG,tsvGC,ttTi5605dna)
 methMats<-tsvToMethMat(g,spltgr,"CGorGC")
 methMatsCG<-tsvToMethMat(tsvCG,spltgr,"CG")
 methMatsGC<-tsvToMethMat(tsvGC,spltgr,"GC")

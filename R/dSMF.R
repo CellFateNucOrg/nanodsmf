@@ -55,9 +55,9 @@ plotSingleMoleculesAmp<-function(mat,regionName,regionGRs,featureGRs=c(),myXlab=
             plot.title = element_text(face = "bold",hjust = 0.5),
             legend.position="bottom", legend.key.height = unit(0.1, "cm")) +
       ggtitle(title) +
-      xlab(myXlab) + ylab("Single molecules") + xlim(start(regionGR),end(regionGR)+10)
+      xlab(myXlab) + ylab("Single molecules") + xlim(GenomicRanges::start(regionGR),GenomicRanges::end(regionGR)+10)
     if(length(featureGRs)>0) {
-      p<-p+geom_linerange(aes(x=start(featGR), y=NULL, ymin=0, ymax=length(reads)+max(3,0.04*length(reads))),col="red") +
+      p<-p+geom_linerange(aes(x=GenomicRanges::start(featGR), y=NULL, ymin=0, ymax=length(reads)+max(3,0.04*length(reads))),col="red") +
         ggplot2::annotate("segment", x = GenomicRanges::start(featGR), xend = GenomicRanges::start(featGR)+20*ifelse(GenomicRanges::strand(featGR)=="-",-1,1),
                           y = length(reads)+max(3,0.04*length(reads)), yend =length(reads)+max(3,0.04*length(reads)), colour = "red",
                           arrow=arrow(length = unit(0.3, "cm")), size=0.7) +
@@ -80,9 +80,9 @@ plotSingleMoleculesAmp<-function(mat,regionName,regionGRs,featureGRs=c(),myXlab=
 #' @export
 getOverlappingSites<-function(gr1,gr2) {
   # adds any sites from gr1 that overlap with gr2 to gr2
-  ol<-findOverlaps(gr1,gr2,ignore.strand=T)
+  ol<-GenomicRanges::findOverlaps(gr1,gr2,ignore.strand=T)
   if (length(ol)>0) {
-    overlapping<-c(gr2,gr1[queryHits(ol)])
+    overlapping<-c(gr2,gr1[S4Vectors::queryHits(ol)])
   } else {
     overlapping<-gr2
   }
@@ -99,9 +99,9 @@ getOverlappingSites<-function(gr1,gr2) {
 #' @export
 getIsolatedSites<-function(gr1,gr2) {
   # removes from gr1 and sites which overlap with gr2
-  ol<-findOverlaps(gr1,gr2,ignore.strand=T)
+  ol<-GenomicRanges::findOverlaps(gr1,gr2,ignore.strand=T)
   if (length(ol)>0) {
-    isolated<-gr1[-queryHits(ol)]
+    isolated<-gr1[-S4Vectors::queryHits(ol)]
   } else {
     isolated<-gr1
   }
@@ -115,8 +115,9 @@ getIsolatedSites<-function(gr1,gr2) {
 #' splitRangeInPairs(gr1)
 #' @export
 splitRangeInPairs<-function(gr) {
-  starts<-seq(start(gr),end(gr),by=2)
-  newGR<-GRanges(seqnames=seqnames(gr),ranges=IRanges(start=starts,width=2),strand="*")
+  starts<-seq(GenomicRanges::start(gr),GenomicRanges::end(gr),by=2)
+  newGR<-GenomicRanges::GRanges(seqnames=GenomeInfoDb:seqnames(gr),
+                                ranges=IRanges::IRanges(start=starts,width=2),strand="*")
   return(newGR)
 }
 
@@ -130,19 +131,19 @@ splitRangeInPairs<-function(gr) {
 splitGCGCruns<-function(gr) {
   # function to (arbitrarily) decompose overlapping GCs and CGs to triplets and doublets
   # create new gr for split up ranges
-  olGCGC<-GRanges()
+  olGCGC<-GenomicRanges::GRanges()
   # find ranges that do not need splitting
-  width3<-width(gr)==3
+  width3<-GenomicRanges::width(gr)==3
   olGCGC<-append(olGCGC,gr[width3])
   # find ranges that need splitting
   toSplit<-gr[!width3]
   if (length(toSplit)>0) {
     for (i in 1:length(toSplit)) {
-      isOdd<-width(toSplit[i])%%2==1
+      isOdd<-GenomicRanges::width(toSplit[i])%%2==1
       if (isOdd) {
         # if there are an odd number of bases, chop off the first three as a triplet, and the rest in pairs
-        firstTriplet<-resize(toSplit[i],3,"start")
-        evenRange<-resize(toSplit[i],width(toSplit[i])-3,"end")
+        firstTriplet<-GenomicRanges::resize(toSplit[i],3,"start")
+        evenRange<-GenomicRanges::resize(toSplit[i],GenomicRanges::width(toSplit[i])-3,"end")
         olGCGC<-append(olGCGC,firstTriplet)
         olGCGC<-append(olGCGC,splitRangeInPairs(evenRange))
       } else {
@@ -171,16 +172,16 @@ findNonOverlappingMotifs<-function(DNAss) {
 
   # move any GC sites that overlap with GCG to the GCG list (removing them from GC list)
   GCGCs<-getOverlappingSites(GCs,GCGCs) # always get overlapping first, otherwise will lose them
-  GCs<-reduce(getIsolatedSites(GCs,GCGCs),ignore.strand=T) # collapse GR on opposite strands
+  GCs<-GenomicRanges::reduce(getIsolatedSites(GCs,GCGCs),ignore.strand=T) # collapse GR on opposite strands
   GCs$context<-"GCH"
 
   # move any CG sites that overlap with GCG to the GCG list (removing them from CG list)
   GCGCs<-getOverlappingSites(CGs,GCGCs) # always get overlapping first, otherwise will lose them
-  CGs<-reduce(getIsolatedSites(CGs,GCGCs),ignore.strand=T) # collapse GR on opposite strands
+  CGs<-GenomicRanges::reduce(getIsolatedSites(CGs,GCGCs),ignore.strand=T) # collapse GR on opposite strands
   CGs$context<-"HCG"
 
   # reduce all the overlapping set to a smallest merged set
-  GCGCs<-reduce(GCGCs,ignore.strand=T)
+  GCGCs<-GenomicRanges::reduce(GCGCs,ignore.strand=T)
   # then arbitrarily split them into non-overlapping GR 2-3 bp long
   GCGCs<-splitGCGCruns(GCGCs)
   GCGCs$context<-"GCGorCGC"
@@ -201,7 +202,7 @@ findGenomeMotifs<-function(genome){
   if (class(genome)=="BSgenome"){
     genome<-BSgenomeToDNAStringSet(genome)
   } else if (is.character(genome)){
-    genome<-readDNAStringSet(genome)
+    genome<-Biostrings::readDNAStringSet(genome)
 
   }
   #strip off anything after a space to deal with additional fasta header info
@@ -209,7 +210,7 @@ findGenomeMotifs<-function(genome){
   grl<-findNonOverlappingMotifs(genome)
   names(grl)<-NULL
   gr<-do.call("c",grl)
-  gr<-sort(gr)
+  gr<-sort(gr,ignore.strand=T)
   return(gr)
 }
 

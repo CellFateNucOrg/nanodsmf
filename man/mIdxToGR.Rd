@@ -13,7 +13,7 @@ mIdxToGR(mIdx)
 A GenomicRanges object
 }
 \description{
-Convert MIndex object to Genomic Ranges object
+Function to convert Mindex object (obtained by matching patterns on DNAstringset) to genomic ranges
 }
 \examples{
 mIdxToGR(Biostrings::vmatchPattern("ATTTAGGGTTTTAGAATACTGCCATTAATTAAAAAT",ttTi5605dna))
