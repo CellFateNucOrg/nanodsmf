@@ -11,18 +11,23 @@ applyGRonGR(gr1, gr2, applyTo, fun, ...)
 
 \item{gr2}{A GenomicRanges object with data of interest}
 
-\item{applyTo}{Column name in gr2 on which to apply the function}
+\item{applyTo}{Vector with names of columns in gr2 on which to apply the function}
 
 \item{fun}{Function to apply (e.g. sum, mean, paste0)}
 }
 \value{
-Ranges from gr1 with summed values of metadata column from gr2
+GRanges from gr1 with summed values of metadata columns from gr2
 }
 \description{
-Apply a function on a data from gr2 with windows provided by gr1
+Apply a function to summarise data from multiple metadata columns of GRanges in gr2 that
+fall within GRanges provided by gr1
 }
 \examples{
+# single gr
 gr1 <- GenomicRanges::GRanges("chr1", IRanges::IRanges(c(1,3,7), c(5,6,10),names=paste0("win", letters[1:3])), score=4:6)
 gr2 <- GenomicRanges::GRanges("chr1", IRanges::IRanges(c(1, 3, 8), c(1, 3, 8),names=paste0("dataID:", letters[1:3])), score=c(10,20,30))
 applyGRonGR(gr1,gr2,applyTo="score",fun=sum)
+gr1 <- GenomicRanges::GRanges("chr1", IRanges::IRanges(c(1,3,7), c(5,6,10),names=paste0("win", letters[1:3])), score=4:6, other=1:3)
+gr2 <- GenomicRanges::GRanges("chr1", IRanges::IRanges(c(1, 3, 8), c(1, 3, 8),names=paste0("dataID:", letters[1:3])), score=c(10,20,30), other=c(100,NA,300))
+applyGRonGR(gr1,gr2,c("score","other"),fun=sum,na.rm=T)
 }
